@@ -38,12 +38,32 @@ EMERGENCY_NUMBERS = {
     "आग": "101"
 }
 
-# ================= TTS =================
+# ================= TTS (espeak-ng subprocess) =================
+import sys
+import tempfile
+import os
+
+_TMP_FILE = os.path.join(tempfile.gettempdir(), "shruti_tts.txt")
+# Update this path if espeak-ng is installed elsewhere
+ESPEAK_PATH = r"C:\Program Files\eSpeak NG\espeak-ng.exe"
+
 def speak(text):
     try:
-        subprocess.call(["espeak-ng", "-v", "hi", "-s", "150", text])
-    except:
-        pass
+        # Write text to temp file to avoid encoding issues
+        with open(_TMP_FILE, "w", encoding="utf-8") as f:
+            f.write(text)
+
+        # Run espeak-ng via subprocess using the file input
+        subprocess.call([
+            ESPEAK_PATH,
+            "-v", "hi",      # Hindi voice
+            "-s", "150",     # Speed
+            "-f", _TMP_FILE  # Read from file
+        ])
+    except Exception as e:
+        print(f"TTS Error: {e}")
+    except Exception as e:
+        print(f"TTS Error: {e}")
 
 # ================= UTILS =================
 def normalize(text):
@@ -173,7 +193,12 @@ try:
                 print(f"\n🧑 User : {user_text}")
                 reply = chatbot_reply(user_text)
                 print(f"🤖 Bot  : {reply}")
+
+                # Pause mic stream so speaker can output audio
+                stream.stop_stream()
                 speak(reply)
+                # Resume mic stream after speaking
+                stream.start_stream()
 
                 if STOP_WORD in user_text:
                     break
